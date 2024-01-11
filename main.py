@@ -3,7 +3,7 @@ We need to add the option of plotting start pose, goal pose and obstacles. Then 
 a dropdown menu for selecting the algorithm.
 """
 
-import pygame 
+import pygame   
 import sys
 import time
 from Pose import Pose
@@ -11,18 +11,17 @@ from a_star import a_star
 
 #Initialise pygame window
 pygame.init()
-pygame_screen_width = pygame_screen_length = 950
+pygame_screen_width = 650
+pygame_screen_length = 1200
 pygame_screen = pygame.display.set_mode((pygame_screen_length, pygame_screen_width))
 pygame.display.set_caption("Interactive Path Planner")
 
 #Dimensions for the grid area
-aspect_ratio = 1.5
-grid_area_width = 600
-grid_area_length = (aspect_ratio) * (grid_area_width)
+grid_area_width = grid_area_length = 600
 
 #to ensure that the grid is always in the center in the x axis
-grid_area_start_x = (pygame_screen_length-grid_area_length)//2 
-grid_area_start_y = 85
+grid_area_start_y = (pygame_screen_width-grid_area_width)//2
+grid_area_start_x = grid_area_start_y
 
 box_size = 20
 
@@ -40,7 +39,7 @@ path_cells = []
 
 #Initialise end point and start point
 goal_pose = Pose(0, 0)
-start_pose = Pose(23, 28)
+start_pose = Pose(23, 23)
 current_pose = Pose(start_pose.x, start_pose.y)
 
 # Function to draw the grid
