@@ -1,8 +1,3 @@
-"""
-We need to add the option of plotting start pose, goal pose and obstacles. Then we need
-a dropdown menu for selecting the algorithm.
-"""
-
 import pygame   
 import sys
 import time
@@ -44,6 +39,16 @@ current_pose = Pose(start_pose.x, start_pose.y)
 
 # Function to draw the grid
 def draw_grid():
+    # Draw border around the grid area
+    pygame.draw.rect(
+        pygame_screen, 
+        (0, 0, 0), 
+        (grid_area_start_x - 1, 
+         grid_area_start_y - 1, 
+         grid_area_length + 3, 
+         grid_area_width + 3), 
+         2)
+
     for row in range(boxesPerCol):
         for col in range(boxesPerRow):
             x = grid_area_start_x + col * box_size
