@@ -2,7 +2,9 @@ import pygame
 import pygame_gui
 import sys
 import time
+import random
 
+from ObstacleGrid import obstacle_grid, update_obstacle_grid
 from Pose import Pose
 from a_star import a_star
 
@@ -25,16 +27,16 @@ box_size = 20
 boxesPerRow = int(grid_area_length//box_size)
 boxesPerCol = int(grid_area_width//box_size)
 
-obstacle_grid = []
 grid_cell_color_obstacle = (0, 0, 0)
 
-# Initialize a 2D array to represent the grid
+# Initialise a 2D array to represent the grid
 grid = [[False for _ in range(boxesPerRow)] for _ in range(boxesPerCol)]
 
 # List to store the cells that are part of the path
 path_cells = []
+obstacle_grid = []
 
-#Initialise values
+# Initialise values
 goal_pose=None
 start_pose=None
 current_pose=None
@@ -57,6 +59,24 @@ select_mode = pygame_gui.elements.UIDropDownMenu(
     relative_rect=select_mode_rect,
     expand_on_option_click=True
 )
+
+#Create generate map button
+map_button_rect = pygame.Rect(800, 200, 300, 50)
+map_button = pygame_gui.elements.UIButton(
+    relative_rect=map_button_rect, 
+    text='Generate Random Map', 
+    manager=manager
+    )
+
+def generate_random_map(boxesPerRow, grid_height, obstacle_probability):
+    grid_map = []
+
+    for row in range(boxesPerCol):
+        for col in range(boxesPerRow):
+            if random.random() < obstacle_probability:
+                obstacle_grid.append((row, col))
+                grid_map.append((row, col))
+    return grid_map
 
 def draw_grid():
     # Draw border around the grid area
@@ -88,13 +108,13 @@ def draw_grid():
                 not(current_pose.x==goal_pose.x and current_pose.y==goal_pose.y)):
                 pygame.draw.rect(pygame_screen, (0, 0, 0), (grid_area_start_x + current_pose.x * box_size, grid_area_start_y + current_pose.y * box_size, box_size, box_size))
 
-            #Draw cell
-            if (row, col) in path_cells:
-                pygame.draw.rect(pygame_screen, (0, 0, 0), (x, y, box_size, box_size))
+            #Draw path cell
+            if ((row, col) in path_cells):
+                pygame.draw.rect(pygame_screen, (0, 0, 200), (x, y, box_size, box_size))
 
-            else:
-                color = grid_cell_color_obstacle if grid[row][col] else (255, 255, 255)
-                pygame.draw.rect(pygame_screen, color, (x, y, box_size, box_size))
+            #Draw obstacle
+            if ((row, col) in obstacle_grid):
+                pygame.draw.rect(pygame_screen, (0, 0, 0), (x, y, box_size, box_size))
 
             # Draw top border
             pygame.draw.line(pygame_screen, (128, 128, 128), (x, y), (x + box_size, y), 1)
@@ -128,6 +148,12 @@ while running:
                 if event.ui_element == start_button:
                     start=True
                     print("Start button clicked!")
+            
+        if event.type == pygame.USEREVENT:
+            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == map_button:
+                    generate_random_map()
+                    print("Generating map")
 
         if event.type == pygame.USEREVENT:
             if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
@@ -157,10 +183,14 @@ while running:
                     grid_area_start_y <= y <= grid_area_start_y + grid_area_width):
                     x, y = event.pos
                     grid_x, grid_y = int((x - grid_area_start_x) // box_size), int((y - grid_area_start_y) // box_size)
-                    grid[grid_y][grid_x] = not grid[grid_y][grid_x]
+                    if (grid_y, grid_x) in obstacle_grid:
+                        obstacle_grid.remove((grid_y, grid_x))
+                    else:
+                        obstacle_grid.append((grid_y, grid_x))
 
         manager.process_events(event)
     manager.update(time_delta)
+    update_obstacle_grid(obstacle_grid)
 
     # Update the Pygame window
     pygame_screen.fill((255, 255, 255))
@@ -170,7 +200,7 @@ while running:
         if (current_pose.x==goal_pose.x and current_pose.y==goal_pose.y):
             pass
         else:
-            current_pose=a_star(current_pose, goal_pose)
+            current_pose=a_star(current_pose, goal_pose, obstacle_grid, path_cells)
 
         path_cells.append((current_pose.y, current_pose.x))
 
@@ -180,6 +210,7 @@ while running:
     manager.draw_ui(pygame_screen)
     pygame.display.update()
     pygame.display.flip()
+    # print(obstacle_grid)
     time.sleep(0.25)
 
 pygame.quit()

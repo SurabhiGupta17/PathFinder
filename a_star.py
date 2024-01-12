@@ -1,27 +1,58 @@
 import math
 from Pose import Pose
 
-def a_star(current_pose: Pose, goal_pose: Pose) -> Pose:
-    # updated_current_pose = Pose()
+def a_star(current_pose: Pose, goal_pose: Pose, obstacles, path_cells) -> Pose:
+    # print(obstacles)
     #For each block, [g_cost, h_cost, f_cost]
-    top_left = [0, 0, 0] 
-    top = [0, 0, 0] 
-    top_right = [0, 0, 0] 
-    right = [0, 0, 0] 
-    bottom_right = [0, 0, 0]
-    bottom = [0, 0, 0]
-    bottom_left = [0, 0, 0] 
-    left =[0, 0, 0]
+    top_left = [1.4, 0, 0] 
+    top = [1.0, 0, 0] 
+    top_right = [1.4, 0, 0] 
+    right = [1.0, 0, 0] 
+    bottom_right = [1.4, 0, 0]
+    bottom = [1.0, 0, 0]
+    bottom_left = [1.4, 0, 0] 
+    left =[1.0, 0, 0]
         
     #Initialise g_cost
-    top_left[0] = 1.4
-    top[0] = 1.0
-    top_right[0] = 1.4
-    right[0] = 1.0
-    bottom_right[0] = 1.4
-    bottom[0] = 1.0
-    bottom_left[0] = 1.4
-    left[0] = 1.0
+    if (current_pose.y-1, current_pose.x-1) in obstacles or (current_pose.y-1, current_pose.x-1) in path_cells:
+        top_left[0]=1000
+    else:
+        top_left[0] = 1.4
+
+    if (current_pose.y-1, current_pose.x) in obstacles or (current_pose.y-1, current_pose.x) in path_cells:
+        top[0]=1000
+    else:
+        top[0] = 1.0
+  
+    if (current_pose.y-1, current_pose.x+1) in obstacles or (current_pose.y-1, current_pose.x+1) in path_cells:
+        top_right[0]=1000
+    else:
+        top_left[0] = 1.4
+
+    if (current_pose.y, current_pose.x+1) in obstacles or (current_pose.y, current_pose.x+1) in path_cells:
+        right[0]=1000
+    else:
+        right[0] = 1.0
+
+    if (current_pose.y+1, current_pose.x+1) in obstacles or (current_pose.y+1, current_pose.x+1) in path_cells:
+        bottom_right[0]=1000
+    else:
+        bottom_right[0] = 1.4
+
+    if (current_pose.y+1, current_pose.x) in obstacles or (current_pose.y+1, current_pose.x) in path_cells:
+        bottom[0]=1000
+    else:
+        bottom[0] = 1.0
+
+    if (current_pose.y+1, current_pose.x-1) in obstacles or (current_pose.y+1, current_pose.x-1) in path_cells:
+        bottom_left[0]=1000
+    else:
+        bottom_left[0] = 1.4
+
+    if (current_pose.y, current_pose.x-1) in obstacles or (current_pose.y, current_pose.x-1) in path_cells:
+        left[0]=1000
+    else:
+        left[0] = 1.0
 
     #Update h_cost
     top_left[1] = math.sqrt(((current_pose.x-1)-goal_pose.x)**2 + ((current_pose.y-1)-goal_pose.y)**2)
@@ -54,11 +85,11 @@ def a_star(current_pose: Pose, goal_pose: Pose) -> Pose:
         left
     ]
 
-    lowest_f = 1000
+    lowest_f = 100000000000
     for i in range(8):
-        # print(f"f_cost : {i} : {self.block[i][2]}")
-        # print(f"g_cost : {i} : {self.block[i][0]}")
-        # print(f"h_cost : {i} : {self.block[i][1]}")
+        print(f"f_cost : {i} : {block[i][2]}")
+        print(f"g_cost : {i} : {block[i][0]}")
+        print(f"h_cost : {i} : {block[i][1]}")
         if lowest_f>block[i][2]:
             lowest_f=block[i][2] 
             best_move = i
