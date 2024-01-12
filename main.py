@@ -2,6 +2,7 @@ import pygame
 import pygame_gui
 import sys
 import time
+
 from Pose import Pose
 from a_star import a_star
 
@@ -33,6 +34,11 @@ grid = [[False for _ in range(boxesPerRow)] for _ in range(boxesPerCol)]
 # List to store the cells that are part of the path
 path_cells = []
 
+#Initialise values
+goal_pose=None
+start_pose=None
+current_pose=None
+
 manager=pygame_gui.UIManager((pygame_screen_length, pygame_screen_width))
 
 #Create start button
@@ -43,12 +49,15 @@ start_button = pygame_gui.elements.UIButton(
     manager=manager
     )
 
-#Initialise end point and start point
-goal_pose = Pose(0, 0)
-start_pose = Pose(23, 23)
-current_pose = Pose(start_pose.x, start_pose.y)
+#Create dropdown for selecting mode
+select_mode_rect=pygame.Rect(900, 100, 200, 50)
+select_mode = pygame_gui.elements.UIDropDownMenu(
+    options_list=['Set Goal Pose', 'Set Start Pose', 'Add obstacles'],
+    starting_option='Set Goal Pose',
+    relative_rect=select_mode_rect,
+    expand_on_option_click=True
+)
 
-# Function to draw the grid
 def draw_grid():
     # Draw border around the grid area
     pygame.draw.rect(
@@ -66,13 +75,18 @@ def draw_grid():
             y = grid_area_start_y + row * box_size
 
             #Draw goal pose
-            pygame.draw.rect(pygame_screen, (200, 0, 0), (grid_area_start_x + goal_pose.x * box_size, grid_area_start_y + goal_pose.y * box_size, box_size, box_size))
+            if (goal_pose):
+                pygame.draw.rect(pygame_screen, (200, 0, 0), (grid_area_start_x + goal_pose.x * box_size, grid_area_start_y + goal_pose.y * box_size, box_size, box_size))
             
             #Draw start pose
-            pygame.draw.rect(pygame_screen, (0, 0, 0), (grid_area_start_x + start_pose.x * box_size, grid_area_start_y + start_pose.y * box_size, box_size, box_size))
+            if (start_pose):
+                pygame.draw.rect(pygame_screen, (0, 150, 0), (grid_area_start_x + start_pose.x * box_size, grid_area_start_y + start_pose.y * box_size, box_size, box_size))
 
-             #Draw current pose
-            pygame.draw.rect(pygame_screen, (0, 0, 0), (grid_area_start_x + current_pose.x * box_size, grid_area_start_y + current_pose.y * box_size, box_size, box_size))
+            #Draw current pose
+            if (current_pose and 
+                not(current_pose.x==start_pose.x and current_pose.y==start_pose.y) and
+                not(current_pose.x==goal_pose.x and current_pose.y==goal_pose.y)):
+                pygame.draw.rect(pygame_screen, (0, 0, 0), (grid_area_start_x + current_pose.x * box_size, grid_area_start_y + current_pose.y * box_size, box_size, box_size))
 
             #Draw cell
             if (row, col) in path_cells:
@@ -100,8 +114,11 @@ def draw_grid():
 clock = pygame.time.Clock()
 running = True
 start=False
+selected_option='Set Goal Pose'
+
 while running:
     time_delta = clock.tick(60)/1000.0
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -112,32 +129,49 @@ while running:
                     start=True
                     print("Start button clicked!")
 
-        manager.process_events(event)
+        if event.type == pygame.USEREVENT:
+            if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                if event.ui_element == select_mode:
+                    selected_option = event.text
 
-        # Handle mouse clicks in the Pygame window
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
-            if (grid_area_start_x <= x <= grid_area_start_x + grid_area_length and
-                grid_area_start_y <= y <= grid_area_start_y + grid_area_width):
-                # Toggle obstacle status for the clicked grid cell
-                x, y = event.pos
-                # Convert pixel coordinates to grid indices
-                grid_x, grid_y = int((x - grid_area_start_x) // box_size), int((y - grid_area_start_y) // box_size)
-                # Toggle the square color
-                grid[grid_y][grid_x] = not grid[grid_y][grid_x]
 
+            if (selected_option=='Set Goal Pose'):
+                if (grid_area_start_x <= x <= grid_area_start_x + grid_area_length and
+                    grid_area_start_y <= y <= grid_area_start_y + grid_area_width):
+                    x, y = event.pos
+                    grid_x, grid_y = int((x - grid_area_start_x) // box_size), int((y - grid_area_start_y) // box_size)
+                    goal_pose = Pose(grid_x, grid_y)
+
+            elif (selected_option=='Set Start Pose'):
+                if (grid_area_start_x <= x <= grid_area_start_x + grid_area_length and
+                    grid_area_start_y <= y <= grid_area_start_y + grid_area_width):
+                    x, y = event.pos
+                    grid_x, grid_y = int((x - grid_area_start_x) // box_size), int((y - grid_area_start_y) // box_size)
+                    start_pose = Pose(grid_x, grid_y)
+                    current_pose = Pose(start_pose.x, start_pose.y)
+
+            elif (selected_option=='Add obstacles'):
+                if (grid_area_start_x <= x <= grid_area_start_x + grid_area_length and
+                    grid_area_start_y <= y <= grid_area_start_y + grid_area_width):
+                    x, y = event.pos
+                    grid_x, grid_y = int((x - grid_area_start_x) // box_size), int((y - grid_area_start_y) // box_size)
+                    grid[grid_y][grid_x] = not grid[grid_y][grid_x]
+
+        manager.process_events(event)
     manager.update(time_delta)
 
     # Update the Pygame window
     pygame_screen.fill((255, 255, 255))
 
+    #If start button is pressed, start the algorithm
     if (start):
         if (current_pose.x==goal_pose.x and current_pose.y==goal_pose.y):
             pass
         else:
             current_pose=a_star(current_pose, goal_pose)
 
-        # Add the current cell to the path
         path_cells.append((current_pose.y, current_pose.x))
 
     # Draw the grid
