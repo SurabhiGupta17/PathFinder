@@ -1,4 +1,5 @@
 import pygame   
+import pygame_gui
 import sys
 import time
 from Pose import Pose
@@ -31,6 +32,16 @@ grid = [[False for _ in range(boxesPerRow)] for _ in range(boxesPerCol)]
 
 # List to store the cells that are part of the path
 path_cells = []
+
+manager=pygame_gui.UIManager((pygame_screen_length, pygame_screen_width))
+
+#Create start button
+button_rect = pygame.Rect(900, 30, 100, 50)
+start_button = pygame_gui.elements.UIButton(
+    relative_rect=button_rect, 
+    text='Start', 
+    manager=manager
+    )
 
 #Initialise end point and start point
 goal_pose = Pose(0, 0)
@@ -86,11 +97,22 @@ def draw_grid():
 
 
 # Pygame main loop
+clock = pygame.time.Clock()
 running = True
+start=False
 while running:
+    time_delta = clock.tick(60)/1000.0
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+        if event.type == pygame.USEREVENT:
+            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == start_button:
+                    start=True
+                    print("Start button clicked!")
+
+        manager.process_events(event)
 
         # Handle mouse clicks in the Pygame window
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -104,19 +126,25 @@ while running:
                 # Toggle the square color
                 grid[grid_y][grid_x] = not grid[grid_y][grid_x]
 
+    manager.update(time_delta)
+
     # Update the Pygame window
     pygame_screen.fill((255, 255, 255))
 
-    if (current_pose.x==goal_pose.x and current_pose.y==goal_pose.y):
-        pass
-    else:
-        current_pose=a_star(current_pose, goal_pose)
+    if (start):
+        if (current_pose.x==goal_pose.x and current_pose.y==goal_pose.y):
+            pass
+        else:
+            current_pose=a_star(current_pose, goal_pose)
 
-    # Add the current cell to the path
-    path_cells.append((current_pose.y, current_pose.x))
+        # Add the current cell to the path
+        path_cells.append((current_pose.y, current_pose.x))
 
     # Draw the grid
     draw_grid()
+    manager.update(0.01)
+    manager.draw_ui(pygame_screen)
+    pygame.display.update()
     pygame.display.flip()
     time.sleep(0.25)
 
