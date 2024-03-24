@@ -6,30 +6,18 @@ import random
 
 from Pose import Pose
 from a_star import a_star
+import settings
+import buttons
 
 #Initialise pygame window
 pygame.init()
-pygame_screen_width = 650
-pygame_screen_length = 1200
-pygame_screen = pygame.display.set_mode((pygame_screen_length, pygame_screen_width))
+pygame_screen = pygame.display.set_mode((settings.SCREEN_LENGTH, settings.SCREEN_WIDTH))
 pygame.display.set_caption("Interactive Path Planner")
-
-#Dimensions for the grid area
-grid_area_width = grid_area_length = 600
-
-#to ensure that the grid is always in the center in the x axis
-grid_area_start_y = (pygame_screen_width-grid_area_width)//2
-grid_area_start_x = grid_area_start_y
-
-box_size = 20
-
-boxesPerRow = int(grid_area_length//box_size)
-boxesPerCol = int(grid_area_width//box_size)
 
 grid_cell_color_obstacle = (0, 0, 0)
 
 # Initialise a 2D array to represent the grid
-grid = [[False for _ in range(boxesPerRow)] for _ in range(boxesPerCol)]
+grid = [[False for _ in range(settings.BOXES_PER_ROW)] for _ in range(settings.BOXES_PER_COL)]
 
 # List to store the cells that are part of the path
 global path_cells
@@ -46,52 +34,18 @@ global start_pose
 start_pose=None
 current_pose=None
 
-manager=pygame_gui.UIManager((pygame_screen_length, pygame_screen_width))
+manager=pygame_gui.UIManager((settings.SCREEN_LENGTH, settings.SCREEN_WIDTH))
 
 def update_obstacle_grid(new_value):
     global obstacle_grid
     obstacle_grid = new_value
 
-#Create start button
-button_rect = pygame.Rect(900, 30, 100, 50)
-start_button = pygame_gui.elements.UIButton(
-    relative_rect=button_rect, 
-    text='Start', 
-    manager=manager
-    )
-
-#Create dropdown for selecting mode
-select_mode_rect=pygame.Rect(850, 115, 200, 50)
-select_mode = pygame_gui.elements.UIDropDownMenu(
-    options_list=['Set Goal Pose', 'Set Start Pose', 'Add obstacles'],
-    starting_option='Set Goal Pose',
-    relative_rect=select_mode_rect,
-    expand_on_option_click=True
-)
-
-#Create generate map button
-map_button_rect = pygame.Rect(800, 200, 300, 50)
-map_button = pygame_gui.elements.UIButton(
-    relative_rect=map_button_rect, 
-    text='Generate Random Map', 
-    manager=manager
-    )
-
-#Create reset button
-reset_map_button_rect = pygame.Rect(900, 285, 100, 50)
-reset_map_button = pygame_gui.elements.UIButton(
-    relative_rect=reset_map_button_rect, 
-    text='Reset Map', 
-    manager=manager
-    )
-
-#Create reset button
-reset_pos_button_rect = pygame.Rect(875, 370, 150, 50)
-reset_pos_button = pygame_gui.elements.UIButton(
-    relative_rect=reset_pos_button_rect, 
-    text='Reset Pose', 
-    manager=manager
-    )
+#Create buttons
+start_button = buttons.create_start_button(manager)
+select_mode = buttons.create_dropdown_menu(manager)
+map_button = buttons.create_generate_map_button(manager)
+reset_map_button = buttons.create_reset_map_button(manager)
+reset_pos_button = buttons.create_reset_pos_button(manager)
 
 def reset_map():
     global goal_pose
@@ -121,7 +75,7 @@ def reset_pos():
     start=False
     draw_grid()
 
-def generate_random_map(boxesPerRow, boxesPerCol, min_cluster_size=20, max_clusters=20):
+def generate_random_map(boxesPerRow, boxesPerCol, min_cluster_size=200, max_clusters=30):
     global obstacle_grid
     global grid_map
     grid_map = []
@@ -159,24 +113,24 @@ def draw_grid():
     pygame.draw.rect(
         pygame_screen, 
         (0, 0, 0), 
-        (grid_area_start_x - 1, 
-         grid_area_start_y - 1, 
-         grid_area_length + 3, 
-         grid_area_width + 3), 
+        (settings.GRID_AREA_START_X - 1, 
+         settings.GRID_AREA_START_Y - 1, 
+         settings.GRID_AREA_LENGTH + 3, 
+         settings.GRID_AREA_WIDTH + 3), 
          2)
 
-    for row in range(boxesPerCol):
-        for col in range(boxesPerRow):
-            x = grid_area_start_x + col * box_size
-            y = grid_area_start_y + row * box_size
+    for row in range(settings.BOXES_PER_COL):
+        for col in range(settings.BOXES_PER_ROW):
+            x = settings.GRID_AREA_START_X + col * settings.BOX_SIZE
+            y = settings.GRID_AREA_START_Y + row * settings.BOX_SIZE
 
             #Draw goal pose
             if (goal_pose):
-                pygame.draw.rect(pygame_screen, (200, 0, 0), (grid_area_start_x + goal_pose.x * box_size, grid_area_start_y + goal_pose.y * box_size, box_size, box_size))
+                pygame.draw.rect(pygame_screen, (200, 0, 0), (settings.GRID_AREA_START_X + goal_pose.x * settings.BOX_SIZE, settings.GRID_AREA_START_Y + goal_pose.y * settings.BOX_SIZE, settings.BOX_SIZE, settings.BOX_SIZE))
             
             #Draw start pose
             if (start_pose):
-                pygame.draw.rect(pygame_screen, (0, 150, 0), (grid_area_start_x + start_pose.x * box_size, grid_area_start_y + start_pose.y * box_size, box_size, box_size))
+                pygame.draw.rect(pygame_screen, (0, 150, 0), (settings.GRID_AREA_START_X + start_pose.x * settings.BOX_SIZE, settings.GRID_AREA_START_Y + start_pose.y * settings.BOX_SIZE, settings.BOX_SIZE, settings.BOX_SIZE))
 
             #Draw current pose
             if (current_pose and 
@@ -184,31 +138,31 @@ def draw_grid():
                 start_pose and
                 not(current_pose.x==start_pose.x and current_pose.y==start_pose.y) and
                 not(current_pose.x==goal_pose.x and current_pose.y==goal_pose.y)):
-                pygame.draw.rect(pygame_screen, (100, 100, 100), (grid_area_start_x + current_pose.x * box_size, grid_area_start_y + current_pose.y * box_size, box_size, box_size))
+                pygame.draw.rect(pygame_screen, (100, 100, 100), (settings.GRID_AREA_START_X + current_pose.x * settings.BOX_SIZE, settings.GRID_AREA_START_Y + current_pose.y * settings.BOX_SIZE, settings.BOX_SIZE, settings.BOX_SIZE))
 
             #Draw path cell
             if ((row, col) in path_cells):
-                pygame.draw.rect(pygame_screen, (0, 0, 200), (x, y, box_size, box_size))
+                pygame.draw.rect(pygame_screen, (0, 0, 200), (x, y, settings.BOX_SIZE, settings.BOX_SIZE))
 
             #Draw obstacle
             if ((row, col) in obstacle_grid):
-                pygame.draw.rect(pygame_screen, (0, 0, 0), (x, y, box_size, box_size))
+                pygame.draw.rect(pygame_screen, (0, 0, 0), (x, y, settings.BOX_SIZE, settings.BOX_SIZE))
 
             #Draw map
             if ((row, col) in grid_map):
-                pygame.draw.rect(pygame_screen, (0, 0, 0), (x, y, box_size, box_size))
+                pygame.draw.rect(pygame_screen, (0, 0, 0), (x, y, settings.BOX_SIZE, settings.BOX_SIZE))
 
             # Draw top border
-            pygame.draw.line(pygame_screen, (128, 128, 128), (x, y), (x + box_size, y), 1)
+            pygame.draw.line(pygame_screen, (128, 128, 128), (x, y), (x + settings.BOX_SIZE, y), 1)
 
             # Draw left border
-            pygame.draw.line(pygame_screen, (128, 128, 128), (x, y), (x, y + box_size), 1)
+            pygame.draw.line(pygame_screen, (128, 128, 128), (x, y), (x, y + settings.BOX_SIZE), 1)
 
             # Draw right border
-            pygame.draw.line(pygame_screen, (128, 128, 128), (x + box_size, y), (x + box_size, y + box_size), 1)
+            pygame.draw.line(pygame_screen, (128, 128, 128), (x + settings.BOX_SIZE, y), (x + settings.BOX_SIZE, y + settings.BOX_SIZE), 1)
 
             # Draw bottom border
-            pygame.draw.line(pygame_screen, (128, 128, 128), (x, y + box_size), (x + box_size, y + box_size), 1)
+            pygame.draw.line(pygame_screen, (128, 128, 128), (x, y + settings.BOX_SIZE), (x + settings.BOX_SIZE, y + settings.BOX_SIZE), 1)
  
 
 
@@ -247,7 +201,7 @@ while running:
         if event.type == pygame.USEREVENT:
             if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == map_button:
-                    grid_map = generate_random_map(boxesPerRow, boxesPerCol)
+                    grid_map = generate_random_map(settings.BOXES_PER_ROW, settings.BOXES_PER_COL)
                     print("Generating map")
 
         if event.type == pygame.USEREVENT:
@@ -259,25 +213,25 @@ while running:
             x, y = event.pos
 
             if (selected_option=='Set Goal Pose'):
-                if (grid_area_start_x <= x <= grid_area_start_x + grid_area_length and
-                    grid_area_start_y <= y <= grid_area_start_y + grid_area_width):
+                if (settings.GRID_AREA_START_X <= x <= settings.GRID_AREA_START_X + settings.GRID_AREA_LENGTH and
+                    settings.GRID_AREA_START_Y <= y <= settings.GRID_AREA_START_Y + settings.GRID_AREA_WIDTH):
                     x, y = event.pos
-                    grid_x, grid_y = int((x - grid_area_start_x) // box_size), int((y - grid_area_start_y) // box_size)
+                    grid_x, grid_y = int((x - settings.GRID_AREA_START_X) // settings.BOX_SIZE), int((y - settings.GRID_AREA_START_Y) // settings.BOX_SIZE)
                     goal_pose = Pose(grid_x, grid_y)
 
             elif (selected_option=='Set Start Pose'):
-                if (grid_area_start_x <= x <= grid_area_start_x + grid_area_length and
-                    grid_area_start_y <= y <= grid_area_start_y + grid_area_width):
+                if (settings.GRID_AREA_START_X <= x <= settings.GRID_AREA_START_X + settings.GRID_AREA_LENGTH and
+                    settings.GRID_AREA_START_Y <= y <= settings.GRID_AREA_START_Y + settings.GRID_AREA_WIDTH):
                     x, y = event.pos
-                    grid_x, grid_y = int((x - grid_area_start_x) // box_size), int((y - grid_area_start_y) // box_size)
+                    grid_x, grid_y = int((x - settings.GRID_AREA_START_X) // settings.BOX_SIZE), int((y - settings.GRID_AREA_START_Y) // settings.BOX_SIZE)
                     start_pose = Pose(grid_x, grid_y)
                     current_pose = Pose(start_pose.x, start_pose.y)
 
             elif (selected_option=='Add obstacles'):
-                if (grid_area_start_x <= x <= grid_area_start_x + grid_area_length and
-                    grid_area_start_y <= y <= grid_area_start_y + grid_area_width):
+                if (settings.GRID_AREA_START_X <= x <= settings.GRID_AREA_START_X + settings.GRID_AREA_LENGTH and
+                    settings.GRID_AREA_START_Y <= y <= settings.GRID_AREA_START_Y + settings.GRID_AREA_WIDTH):
                     x, y = event.pos
-                    grid_x, grid_y = int((x - grid_area_start_x) // box_size), int((y - grid_area_start_y) // box_size)
+                    grid_x, grid_y = int((x - settings.GRID_AREA_START_X) // settings.BOX_SIZE), int((y - settings.GRID_AREA_START_Y) // settings.BOX_SIZE)
                     if (grid_y, grid_x) in obstacle_grid:
                         obstacle_grid.remove((grid_y, grid_x))
                     else:
