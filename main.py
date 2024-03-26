@@ -26,6 +26,10 @@ global obstacle_grid
 obstacle_grid = []
 global grid_map
 grid_map = []
+global visited_cells
+visited_cells = []
+global not_visited_cells
+not_visited_cells = []
 
 # Initialise values
 global goal_pose
@@ -75,12 +79,12 @@ def reset_pos():
     start=False
     draw_grid()
 
-def generate_random_map(boxesPerRow, boxesPerCol, min_cluster_size=200, max_clusters=30):
+def generate_random_map(boxesPerRow, boxesPerCol, min_cluster_size=2, max_clusters=5):
     global obstacle_grid
     global grid_map
     grid_map = []
 
-    for _ in range(random.randint(10, max_clusters)):
+    for _ in range(random.randint(1, max_clusters)):
         # Randomly select a starting point for the cluster
         start_row = random.randint(0, boxesPerCol - 1)
         start_col = random.randint(0, boxesPerRow - 1)
@@ -139,7 +143,7 @@ def draw_grid():
                 not(current_pose.x==start_pose.x and current_pose.y==start_pose.y) and
                 not(current_pose.x==goal_pose.x and current_pose.y==goal_pose.y)):
                 pygame.draw.rect(pygame_screen, (100, 100, 100), (settings.GRID_AREA_START_X + current_pose.x * settings.BOX_SIZE, settings.GRID_AREA_START_Y + current_pose.y * settings.BOX_SIZE, settings.BOX_SIZE, settings.BOX_SIZE))
-
+    
             #Draw path cell
             if ((row, col) in path_cells):
                 pygame.draw.rect(pygame_screen, (0, 0, 200), (x, y, settings.BOX_SIZE, settings.BOX_SIZE))
@@ -241,6 +245,8 @@ while running:
     manager.update(time_delta)
     update_obstacle_grid(obstacle_grid)
 
+
+
     # Update the Pygame window
     pygame_screen.fill((255, 255, 255))
 
@@ -249,9 +255,28 @@ while running:
         if (current_pose.x==goal_pose.x and current_pose.y==goal_pose.y):
             pass
         else:
-            current_pose=a_star(current_pose, goal_pose, obstacle_grid, path_cells)
+            if [current_pose.x, current_pose.y] not in visited_cells:
+                visited_cells.append([current_pose.x, current_pose.y]) 
+
+            if [current_pose.x, current_pose.y-1] not in not_visited_cells and [current_pose.x, current_pose.y-1] not in visited_cells and 0 < current_pose.y:
+                not_visited_cells.append([current_pose.x, current_pose.y-1])  
+
+            if [current_pose.x+1, current_pose.y] not in not_visited_cells and [current_pose.x+1, current_pose.y] not in visited_cells and current_pose.x < 5:
+                not_visited_cells.append([current_pose.x+1, current_pose.y])  
+
+            if [current_pose.x, current_pose.y+1] not in not_visited_cells and [current_pose.x, current_pose.y+1] not in visited_cells and current_pose.y < 5:
+                not_visited_cells.append([current_pose.x, current_pose.y+1])  
+
+            if [current_pose.x-1, current_pose.y] not in not_visited_cells and [current_pose.x-1, current_pose.y] not in visited_cells and 0 < current_pose.x:
+                not_visited_cells.append([current_pose.x-1, current_pose.y])   
+
+            current_pose.x, current_pose.y = not_visited_cells.pop()
+        
+            # current_pose=a_star(current_pose, goal_pose, obstacle_grid, path_cells)
 
         path_cells.append((current_pose.y, current_pose.x))
+        print(not_visited_cells)
+        print(visited_cells)
 
     # Draw the grid
     draw_grid()
@@ -259,7 +284,7 @@ while running:
     manager.draw_ui(pygame_screen)
     pygame.display.update()
     pygame.display.flip()
-    time.sleep(0.25)
+    time.sleep(0.5)
 
 pygame.quit()
 sys.exit()
